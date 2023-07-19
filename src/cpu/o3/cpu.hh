@@ -72,7 +72,6 @@
 
 namespace gem5
 {
-
 template <class>
 class Checker;
 class ThreadContext;

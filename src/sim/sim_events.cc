@@ -42,15 +42,19 @@
 
 #include "sim/sim_events.hh"
 
+#include <iomanip>
 #include <string>
 
 #include "base/callback.hh"
+#include "burst_counter.hh"
 #include "sim/eventq.hh"
 #include "sim/sim_exit.hh"
 #include "sim/stats.hh"
 
 namespace gem5
 {
+extern burstCounter bc;
+extern Tick BCClockPeriod;
 
 GlobalSimLoopExitEvent::GlobalSimLoopExitEvent(Tick when,
                                                const std::string &_cause,
@@ -91,6 +95,18 @@ exitSimLoop(const std::string &message, int exit_code, Tick when, Tick repeat,
     warn_if(serialize && (when != curTick() || repeat),
             "exitSimLoop called with a delay and auto serialization. This is "
             "currently unsupported.");
+
+    bc.dumpBCtoFile<1>(16, bc.eventIn16Cycles);
+    bc.dumpBCtoFile<2>(16, bc.eventIn16CyclesV2);
+    bc.dumpBCtoFile<1>(32, bc.eventIn32Cycles);
+    bc.dumpBCtoFile<2>(32, bc.eventIn32CyclesV2);
+    bc.dumpBCtoFile<1>(64, bc.eventIn64Cycles);
+    bc.dumpBCtoFile<2>(64, bc.eventIn64CyclesV2);
+    bc.dumpBCtoFile<1>(128, bc.eventIn128Cycles);
+    bc.dumpBCtoFile<2>(128, bc.eventIn128CyclesV2);
+    bc.dumpBCtoFile<1>(256, bc.eventIn256Cycles);
+    bc.dumpBCtoFile<2>(256, bc.eventIn256CyclesV2);
+    bc.printEventNames();
 
     new GlobalSimLoopExitEvent(when + simQuantum, message, exit_code, repeat);
 }

@@ -47,6 +47,7 @@
 
 #include "base/compiler.hh"
 #include "base/logging.hh"
+#include "base/stats/types.hh"
 #include "debug/Cache.hh"
 #include "debug/CacheComp.hh"
 #include "debug/CachePort.hh"
@@ -62,9 +63,13 @@
 #include "params/BaseCache.hh"
 #include "params/WriteAllocator.hh"
 #include "sim/cur_tick.hh"
+#include <iostream>
+#include <string>
 
 namespace gem5
 {
+extern burstCounter bc;
+extern Tick BCClockPeriod;
 
 BaseCache::CacheResponsePort::CacheResponsePort(const std::string &_name,
                                           BaseCache *_cache,
@@ -399,12 +404,62 @@ BaseCache::handleTimingReqMiss(PacketPtr pkt, MSHR *mshr, CacheBlk *blk,
     }
 }
 
+void BaseCache::recordCacheMisses() {
+    // total Cycles: 6383155
+    // get the last substr split by '.', cacheName could be like "l1dcache"
+    std::string cacheName = name().substr(name().find_last_of('.') + 1);
+    Tick tick = curTick();
+    if (cacheName == "l1dcache") {
+        bc.update(cacheName + ".overallMisses", stats.overallMisses.total(),
+                  tick);
+    } else if (cacheName == "l1icache") {
+        bc.update(cacheName + ".overallMisses", stats.overallMisses.total(),
+                  tick);
+    } else if (cacheName == "l2cache") {
+        bc.update(cacheName + ".overallMisses", stats.overallMisses.total(),
+                  tick);
+    } else if (cacheName == "l3cache") {
+        bc.update(cacheName + ".overallMisses", stats.overallMisses.total(),
+                  tick);
+    }
+}
+
+void BaseCache::recordCacheHits() {
+    // total Cycles: 6383155
+    // get the last substr split by '.', cacheName could be like "l1dcache"
+    std::string cacheName = name().substr(name().find_last_of('.') + 1);
+
+    // std::cout << cacheName << std::endl;
+    if (cacheName == "l2cache") {
+        bc.update(cacheName + ".overallHits", stats.overallHits.total(),
+                  curTick());
+    } else if (cacheName == "l3cache") {
+        bc.update(cacheName + ".overallHits", stats.overallHits.total(),
+                  curTick());
+    }
+}
+
+void BaseCache::dumpCacheMissResult() {
+    // total Cycles: 6383155
+    // get the last substr split by '.', cacheName could be like "l1dcache"
+    std::string cacheName = name().substr(name().find_last_of('.') + 1);
+}
+
 void
 BaseCache::recvTimingReq(PacketPtr pkt)
 {
     // anything that is merely forwarded pays for the forward latency and
     // the delay provided by the crossbar
     Tick forward_time = clockEdge(forwardLatency) + pkt->headerDelay;
+
+    // TODO: if you want to periodically store counter values
+    // check if curTick() - lastCacheMissResultDumpTick > 10000 * clockPeriod()
+    // if yes, dump the cache miss results
+    // total Cycles: 6383155
+    // if ((curTick() - lastCacheMissResultDumpTick) / clockPeriod() > 100000) {
+    //     dumpCacheMissResult();
+    //     lastCacheMissResultDumpTick = curTick();
+    // }
 
     if (pkt->cmd == MemCmd::LockedRMWWriteReq) {
         // For LockedRMW accesses, we mark the block inaccessible after the

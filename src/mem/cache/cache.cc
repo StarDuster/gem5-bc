@@ -62,6 +62,7 @@
 #include "mem/cache/write_queue_entry.hh"
 #include "mem/request.hh"
 #include "params/Cache.hh"
+#include "sim/cur_tick.hh"
 
 namespace gem5
 {

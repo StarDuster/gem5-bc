@@ -51,9 +51,11 @@
 #include "debug/O3PipeView.hh"
 #include "debug/Rename.hh"
 #include "params/BaseO3CPU.hh"
+// #include "sim/burst_counter.hh"
 
 namespace gem5
 {
+extern burstCounter bc;
 
 namespace o3
 {
@@ -460,10 +462,15 @@ Rename::rename(bool &status_change, ThreadID tid)
 
     if (renameStatus[tid] == Blocked) {
         ++stats.blockCycles;
+        // bc.update("rename.blockCycles", stats.blockCycles.total(),
+        // curTick());
     } else if (renameStatus[tid] == Squashing) {
         ++stats.squashCycles;
+        bc.update("rename.squashCycles", stats.squashCycles.total(), curTick());
     } else if (renameStatus[tid] == SerializeStall) {
         ++stats.serializeStallCycles;
+        bc.update("rename.serializeStallCycles",
+                  stats.serializeStallCycles.total(), curTick());
         // If we are currently in SerializeStall and resumeSerialize
         // was set, then that means that we are resuming serializing
         // this cycle.  Tell the previous stages to block.
@@ -518,11 +525,16 @@ Rename::renameInsts(ThreadID tid)
                 tid);
         // Should I change status to idle?
         ++stats.idleCycles;
+        // bc.update("rename.idleCycles", stats.idleCycles.total(), curTick());
+
         return;
     } else if (renameStatus[tid] == Unblocking) {
         ++stats.unblockCycles;
+        bc.update("rename.unblockCycles", stats.unblockCycles.total(),
+                  curTick());
     } else if (renameStatus[tid] == Running) {
         ++stats.runCycles;
+        // bc.update("rename.runCycles", stats.runCycles.total(), curTick());
     }
 
     // Will have to do a different calculation for the number of free
@@ -642,6 +654,8 @@ Rename::renameInsts(ThreadID tid)
                     tid, inst->seqNum, inst->pcState());
 
             ++stats.squashedInsts;
+            bc.update("rename.squashedInsts", stats.squashedInsts.total(),
+                      curTick());
 
             // Decrement how many instructions are available.
             --insts_available;
@@ -663,6 +677,8 @@ Rename::renameInsts(ThreadID tid)
             blockThisCycle = true;
             insts_to_rename.push_front(inst);
             ++stats.fullRegistersEvents;
+            bc.update("rename.fullRegistersEvents",
+                      stats.fullRegistersEvents.total(), curTick());
 
             break;
         }
@@ -682,9 +698,13 @@ Rename::renameInsts(ThreadID tid)
 
             if (!inst->isTempSerializeBefore()) {
                 stats.serializing++;
+                // bc.update("rename.serializing", stats.serializing.total(),
+                //           curTick());
                 inst->setSerializeHandled();
             } else {
                 stats.tempSerializing++;
+                // bc.update("rename.tempSerializing",
+                //           stats.tempSerializing.total(), curTick());
             }
 
             // Change status over to SerializeStall so that other stages know

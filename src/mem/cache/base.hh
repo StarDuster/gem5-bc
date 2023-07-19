@@ -76,8 +76,11 @@
 #include "sim/sim_exit.hh"
 #include "sim/system.hh"
 
+
 namespace gem5
 {
+extern burstCounter bc;
+extern Tick BCClockPeriod;
 
 GEM5_DEPRECATED_NAMESPACE(Prefetcher, prefetch);
 namespace prefetch
@@ -1149,6 +1152,11 @@ class BaseCache : public ClockedObject
     /** Registers probes. */
     void regProbePoints() override;
 
+    void dumpCacheMissResult();
+    void recordCacheMisses();
+    void recordCacheHits();
+    Tick lastCacheMissResultDumpTick = 0;
+
   public:
     BaseCache(const BaseCacheParams &p, unsigned blk_size);
     ~BaseCache();
@@ -1294,20 +1302,23 @@ class BaseCache : public ClockedObject
     }
 
     void incMissCount(PacketPtr pkt)
-    {
+    {   
         assert(pkt->req->requestorId() < system->maxRequestors());
         stats.cmdStats(pkt).misses[pkt->req->requestorId()]++;
         pkt->req->incAccessDepth();
+        recordCacheMisses();
         if (missCount) {
             --missCount;
             if (missCount == 0)
                 exitSimLoop("A cache reached the maximum miss count");
         }
     }
+
     void incHitCount(PacketPtr pkt)
     {
         assert(pkt->req->requestorId() < system->maxRequestors());
         stats.cmdStats(pkt).hits[pkt->req->requestorId()]++;
+        recordCacheHits();
     }
 
     /**

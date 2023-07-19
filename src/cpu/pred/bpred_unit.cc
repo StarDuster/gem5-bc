@@ -48,9 +48,12 @@
 #include "base/compiler.hh"
 #include "base/trace.hh"
 #include "debug/Branch.hh"
+#include "params/BranchPredictor.hh"
+#include "sim/burst_counter.hh"
 
 namespace gem5
 {
+extern burstCounter bc;
 
 namespace branch_prediction
 {
@@ -141,6 +144,8 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
     std::unique_ptr<PCStateBase> target(pc.clone());
 
     ++stats.lookups;
+    // bc.update("branchPred.lookups", stats.lookups.total(), curTick());
+
     ppBranches->notify(1);
 
     void *bp_history = NULL;
@@ -154,6 +159,8 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
         uncondBranch(tid, pc.instAddr(), bp_history);
     } else {
         ++stats.condPredicted;
+        // bc.update("branchPred.condPredicted", stats.condPredicted.total(),
+        //           curTick());
         pred_taken = lookup(tid, pc.instAddr(), bp_history);
 
         DPRINTF(Branch, "[tid:%i] [sn:%llu] "
@@ -179,6 +186,7 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
         //       support coroutines.
         if (inst->isReturn()) {
             ++stats.RASUsed;
+            bc.update("branchPred.RASUsed", stats.RASUsed.total(), curTick());
             predict_record.wasReturn = true;
             // If it's a function return call, then look up the address
             // in the RAS.
@@ -217,9 +225,13 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
         if (!inst->isReturn()) {
             if (inst->isDirectCtrl() || !iPred) {
                 ++stats.BTBLookups;
+                bc.update("branchPred.BTBLookups", stats.BTBLookups.total(),
+                          curTick());
                 // Check BTB on direct branches
                 if (BTB.valid(pc.instAddr(), tid)) {
                     ++stats.BTBHits;
+                    bc.update("branchPred.BTBHits", stats.BTBHits.total(),
+                              curTick());
                     // If it's not a return, use the BTB to get target addr.
                     set(target, BTB.lookup(pc.instAddr(), tid));
                     DPRINTF(Branch,
@@ -249,16 +261,22 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
             } else {
                 predict_record.wasIndirect = true;
                 ++stats.indirectLookups;
+                bc.update("branchPred.indirectLookups",
+                          stats.indirectLookups.total(), curTick());
                 //Consult indirect predictor on indirect control
                 if (iPred->lookup(pc.instAddr(), *target, tid)) {
                     // Indirect predictor hit
                     ++stats.indirectHits;
+                    bc.update("branchPred.indirectHits",
+                              stats.indirectHits.total(), curTick());
                     DPRINTF(Branch,
                             "[tid:%i] [sn:%llu] Instruction %s predicted "
                             "indirect target is %s\n",
                             tid, seqNum, pc, *target);
                 } else {
                     ++stats.indirectMisses;
+                    bc.update("branchPred.indirectMisses",
+                              stats.indirectMisses.total(), curTick());
                     pred_taken = false;
                     predict_record.predTaken = pred_taken;
                     DPRINTF(Branch,
@@ -403,6 +421,9 @@ BPredUnit::squash(const InstSeqNum &squashed_sn,
     History &pred_hist = predHist[tid];
 
     ++stats.condIncorrect;
+    // board.processor.cores.core.branchPred.condIncorrect
+    bc.update("branchPred.condIncorrect", stats.condIncorrect.total(),
+              curTick());
     ppMisses->notify(1);
 
     DPRINTF(Branch, "[tid:%i] Squashing from sequence number %i, "
@@ -431,6 +452,8 @@ BPredUnit::squash(const InstSeqNum &squashed_sn,
 
         if ((*hist_it).usedRAS) {
             ++stats.RASIncorrect;
+            bc.update("branchPred.RASIncorrect", stats.RASIncorrect.total(),
+                      curTick());
             DPRINTF(Branch,
                     "[tid:%i] [squash sn:%llu] Incorrect RAS [sn:%llu]\n",
                     tid, squashed_sn, hist_it->seqNum);
@@ -482,6 +505,8 @@ BPredUnit::squash(const InstSeqNum &squashed_sn,
                         hist_it->seqNum, hist_it->pc);
 
                 ++stats.BTBUpdates;
+                bc.update("branchPred.BTBUpdates", stats.BTBUpdates.total(),
+                          curTick());
                 BTB.update(hist_it->pc, corr_target, tid);
             }
         } else {

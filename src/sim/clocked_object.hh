@@ -50,9 +50,11 @@
 #include "sim/clock_domain.hh"
 #include "sim/power_state.hh"
 #include "sim/sim_object.hh"
+#include "sim/burst_counter.hh"
 
 namespace gem5
 {
+extern Tick BCClockPeriod;
 
 /**
  * Helper class for objects that need to be clocked. Clocked objects
@@ -115,6 +117,9 @@ class Clocked
     Clocked(ClockDomain &clk_domain)
         : tick(0), cycle(0), clockDomain(clk_domain)
     {
+        if (! BCClockPeriod or BCClockPeriod == 0) {
+            BCClockPeriod = clockPeriod();
+        }
         // Register with the clock domain, so that if the clock domain
         // frequency changes, we can update this object's tick.
         clockDomain.registerWithClockDomain(this);

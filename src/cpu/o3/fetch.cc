@@ -71,6 +71,7 @@
 
 namespace gem5
 {
+extern burstCounter bc;
 
 namespace o3
 {
@@ -1145,12 +1146,19 @@ Fetch::fetch(bool &status_change)
 
             fetchCacheLine(fetchAddr, tid, this_pc.instAddr());
 
-            if (fetchStatus[tid] == IcacheWaitResponse)
+            if (fetchStatus[tid] == IcacheWaitResponse) {
                 ++fetchStats.icacheStallCycles;
-            else if (fetchStatus[tid] == ItlbWait)
+                bc.update("fetch.icacheStallCycles",
+                          fetchStats.icacheStallCycles.total(), curTick());
+            } else if (fetchStatus[tid] == ItlbWait) {
                 ++fetchStats.tlbCycles;
-            else
+                bc.update("fetch.tlbCycles", fetchStats.tlbCycles.total(),
+                          curTick());
+            } else {
                 ++fetchStats.miscStallCycles;
+                bc.update("fetch.miscStallCycles",
+                          fetchStats.miscStallCycles.total(), curTick());
+            }
             return;
         } else if (checkInterrupt(this_pc.instAddr()) &&
                 !delayedCommit[tid]) {
@@ -1158,12 +1166,18 @@ Fetch::fetch(bool &status_change)
             // an delayed commit micro-op currently (delayed commit
             // instructions are not interruptable by interrupts, only faults)
             ++fetchStats.miscStallCycles;
+            bc.update("fetch.miscStallCycles",
+                      fetchStats.miscStallCycles.total(), curTick());
             DPRINTF(Fetch, "[tid:%i] Fetch is stalled!\n", tid);
             return;
         }
     } else {
         if (fetchStatus[tid] == Idle) {
             ++fetchStats.idleCycles;
+            // name() = board.processor.cores.core.fetch
+            bc.update("fetch.idleCycles", fetchStats.idleCycles.total(),
+                      curTick());
+
             DPRINTF(Fetch, "[tid:%i] Fetch is idle!\n", tid);
         }
 
@@ -1172,6 +1186,7 @@ Fetch::fetch(bool &status_change)
     }
 
     ++fetchStats.cycles;
+    // bc.update("fetch.cycles", fetchStats.cycles.total(), curTick());
 
     std::unique_ptr<PCStateBase> next_pc(this_pc.clone());
 

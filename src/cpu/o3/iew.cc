@@ -60,6 +60,7 @@
 
 namespace gem5
 {
+extern burstCounter bc;
 
 namespace o3
 {
@@ -143,53 +144,54 @@ IEW::regProbePoints()
 
 IEW::IEWStats::IEWStats(CPU *cpu)
     : statistics::Group(cpu, "iew"),
-    ADD_STAT(idleCycles, statistics::units::Cycle::get(),
-             "Number of cycles IEW is idle"),
-    ADD_STAT(squashCycles, statistics::units::Cycle::get(),
-             "Number of cycles IEW is squashing"),
-    ADD_STAT(blockCycles, statistics::units::Cycle::get(),
-             "Number of cycles IEW is blocking"),
-    ADD_STAT(unblockCycles, statistics::units::Cycle::get(),
-             "Number of cycles IEW is unblocking"),
-    ADD_STAT(dispatchedInsts, statistics::units::Count::get(),
-             "Number of instructions dispatched to IQ"),
-    ADD_STAT(dispSquashedInsts, statistics::units::Count::get(),
-             "Number of squashed instructions skipped by dispatch"),
-    ADD_STAT(dispLoadInsts, statistics::units::Count::get(),
-             "Number of dispatched load instructions"),
-    ADD_STAT(dispStoreInsts, statistics::units::Count::get(),
-             "Number of dispatched store instructions"),
-    ADD_STAT(dispNonSpecInsts, statistics::units::Count::get(),
-             "Number of dispatched non-speculative instructions"),
-    ADD_STAT(iqFullEvents, statistics::units::Count::get(),
-             "Number of times the IQ has become full, causing a stall"),
-    ADD_STAT(lsqFullEvents, statistics::units::Count::get(),
-             "Number of times the LSQ has become full, causing a stall"),
-    ADD_STAT(memOrderViolationEvents, statistics::units::Count::get(),
-             "Number of memory order violations"),
-    ADD_STAT(predictedTakenIncorrect, statistics::units::Count::get(),
-             "Number of branches that were predicted taken incorrectly"),
-    ADD_STAT(predictedNotTakenIncorrect, statistics::units::Count::get(),
-             "Number of branches that were predicted not taken incorrectly"),
-    ADD_STAT(branchMispredicts, statistics::units::Count::get(),
-             "Number of branch mispredicts detected at execute",
-             predictedTakenIncorrect + predictedNotTakenIncorrect),
-    executedInstStats(cpu),
-    ADD_STAT(instsToCommit, statistics::units::Count::get(),
-             "Cumulative count of insts sent to commit"),
-    ADD_STAT(writebackCount, statistics::units::Count::get(),
-             "Cumulative count of insts written-back"),
-    ADD_STAT(producerInst, statistics::units::Count::get(),
-             "Number of instructions producing a value"),
-    ADD_STAT(consumerInst, statistics::units::Count::get(),
-             "Number of instructions consuming a value"),
-    ADD_STAT(wbRate, statistics::units::Rate<
-                statistics::units::Count, statistics::units::Cycle>::get(),
-             "Insts written-back per cycle"),
-    ADD_STAT(wbFanout, statistics::units::Rate<
-                statistics::units::Count, statistics::units::Count>::get(),
-             "Average fanout of values written-back")
-{
+      ADD_STAT(idleCycles, statistics::units::Cycle::get(),
+               "Number of cycles IEW is idle"),
+      ADD_STAT(squashCycles, statistics::units::Cycle::get(),
+               "Number of cycles IEW is squashing"),
+      ADD_STAT(blockCycles, statistics::units::Cycle::get(),
+               "Number of cycles IEW is blocking"),
+      ADD_STAT(unblockCycles, statistics::units::Cycle::get(),
+               "Number of cycles IEW is unblocking"),
+      ADD_STAT(dispatchedInsts, statistics::units::Count::get(),
+               "Number of instructions dispatched to IQ"),
+      ADD_STAT(dispSquashedInsts, statistics::units::Count::get(),
+               "Number of squashed instructions skipped by dispatch"),
+      ADD_STAT(dispLoadInsts, statistics::units::Count::get(),
+               "Number of dispatched load instructions"),
+      ADD_STAT(dispStoreInsts, statistics::units::Count::get(),
+               "Number of dispatched store instructions"),
+      ADD_STAT(dispNonSpecInsts, statistics::units::Count::get(),
+               "Number of dispatched non-speculative instructions"),
+      ADD_STAT(iqFullEvents, statistics::units::Count::get(),
+               "Number of times the IQ has become full, causing a stall"),
+      ADD_STAT(lsqFullEvents, statistics::units::Count::get(),
+               "Number of times the LSQ has become full, causing a stall"),
+      ADD_STAT(memOrderViolationEvents, statistics::units::Count::get(),
+               "Number of memory order violations"),
+      ADD_STAT(predictedTakenIncorrect, statistics::units::Count::get(),
+               "Number of branches that were predicted taken incorrectly"),
+      ADD_STAT(predictedNotTakenIncorrect, statistics::units::Count::get(),
+               "Number of branches that were predicted not taken incorrectly"),
+      ADD_STAT(branchMispredicts, statistics::units::Count::get(),
+               "Number of branch mispredicts detected at execute",
+               predictedTakenIncorrect + predictedNotTakenIncorrect),
+      executedInstStats(cpu),
+      ADD_STAT(instsToCommit, statistics::units::Count::get(),
+               "Cumulative count of insts sent to commit"),
+      ADD_STAT(writebackCount, statistics::units::Count::get(),
+               "Cumulative count of insts written-back"),
+      ADD_STAT(producerInst, statistics::units::Count::get(),
+               "Number of instructions producing a value"),
+      ADD_STAT(consumerInst, statistics::units::Count::get(),
+               "Number of instructions consuming a value"),
+      ADD_STAT(wbRate,
+               statistics::units::Rate<statistics::units::Count,
+                                       statistics::units::Cycle>::get(),
+               "Insts written-back per cycle"),
+      ADD_STAT(wbFanout,
+               statistics::units::Rate<statistics::units::Count,
+                                       statistics::units::Count>::get(),
+               "Average fanout of values written-back") {
     instsToCommit
         .init(cpu->numThreads)
         .flags(statistics::total);
@@ -838,9 +840,13 @@ IEW::dispatch(ThreadID tid)
 
     if (dispatchStatus[tid] == Blocked) {
         ++iewStats.blockCycles;
+        // bc.update("iewStats.blockCycles", iewStats.blockCycles.total(),
+        // curTick());
 
     } else if (dispatchStatus[tid] == Squashing) {
         ++iewStats.squashCycles;
+        bc.update("iewStats.squashCycles", iewStats.squashCycles.total(),
+                  curTick());
     }
 
     // Dispatch should try to dispatch as many instructions as its bandwidth
@@ -862,6 +868,8 @@ IEW::dispatch(ThreadID tid)
         dispatchInsts(tid);
 
         ++iewStats.unblockCycles;
+        // bc.update("iewStats.unblockCycles", iewStats.unblockCycles.total(),
+        //           curTick());
 
         if (fromRename->size != 0) {
             // Add the current inputs to the skid buffer so they can be
@@ -947,6 +955,8 @@ IEW::dispatchInsts(ThreadID tid)
             toRename->iewUnblock[tid] = false;
 
             ++iewStats.iqFullEvents;
+            bc.update("iewStats.iqFullEvents", iewStats.iqFullEvents.total(),
+                      curTick());
             break;
         }
 
@@ -966,6 +976,8 @@ IEW::dispatchInsts(ThreadID tid)
             toRename->iewUnblock[tid] = false;
 
             ++iewStats.lsqFullEvents;
+            bc.update("iewStats.lsqFullEvents", iewStats.lsqFullEvents.total(),
+                      curTick());
             break;
         }
 
@@ -1313,8 +1325,14 @@ IEW::executeInsts()
 
                 if (inst->readPredTaken()) {
                     iewStats.predictedTakenIncorrect++;
+                    bc.update("iewStats.predictedTakenIncorrect",
+                              iewStats.predictedTakenIncorrect.total(),
+                              curTick());
                 } else {
                     iewStats.predictedNotTakenIncorrect++;
+                    bc.update("iewStats.predictedNotTakenIncorrect",
+                              iewStats.predictedNotTakenIncorrect.total(),
+                              curTick());
                 }
             } else if (ldstQueue.violation(tid)) {
                 assert(inst->isMemRef());
@@ -1612,8 +1630,13 @@ IEW::checkMisprediction(const DynInstPtr& inst)
 
             if (inst->readPredTaken()) {
                 iewStats.predictedTakenIncorrect++;
+                bc.update("iewStats.predictedTakenIncorrect",
+                          iewStats.predictedTakenIncorrect.total(), curTick());
             } else {
                 iewStats.predictedNotTakenIncorrect++;
+                bc.update("iewStats.predictedNotTakenIncorrect",
+                          iewStats.predictedNotTakenIncorrect.total(),
+                          curTick());
             }
         }
     }

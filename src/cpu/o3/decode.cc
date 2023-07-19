@@ -50,6 +50,7 @@
 #include "debug/O3PipeView.hh"
 #include "params/BaseO3CPU.hh"
 #include "sim/full_system.hh"
+// #include "sim/burst_counter.hh"
 
 // clang complains about std::set being overloaded with Packet::set if
 // we open up the entire namespace std
@@ -57,7 +58,7 @@ using std::list;
 
 namespace gem5
 {
-
+extern burstCounter bc;
 namespace o3
 {
 
@@ -586,8 +587,11 @@ Decode::decode(bool &status_change, ThreadID tid)
 
     if (decodeStatus[tid] == Blocked) {
         ++stats.blockedCycles;
+        // bc.update("decode.blockedCycles", stats.blockedCycles.total(),
+        //           curTick());
     } else if (decodeStatus[tid] == Squashing) {
         ++stats.squashCycles;
+        bc.update("decode.squashCycles", stats.squashCycles.total(), curTick());
     }
 
     // Decode should try to decode as many instructions as its bandwidth
@@ -631,13 +635,17 @@ Decode::decodeInsts(ThreadID tid)
                 " early.\n",tid);
         // Should I change the status to idle?
         ++stats.idleCycles;
+        bc.update("decode.idleCycles", stats.idleCycles.total(), curTick());
         return;
     } else if (decodeStatus[tid] == Unblocking) {
         DPRINTF(Decode, "[tid:%i] Unblocking, removing insts from skid "
                 "buffer.\n",tid);
         ++stats.unblockCycles;
+        bc.update("decode.unblockCycles", stats.unblockCycles.total(),
+                  curTick());
     } else if (decodeStatus[tid] == Running) {
         ++stats.runCycles;
+        // bc.update("decode.runCycles", stats.runCycles.total(), curTick());
     }
 
     std::queue<DynInstPtr>
@@ -662,6 +670,8 @@ Decode::decodeInsts(ThreadID tid)
                     tid, inst->seqNum, inst->pcState());
 
             ++stats.squashedInsts;
+            // bc.update("decode.squashedInsts", stats.squashedInsts.total(),
+            //           curTick());
 
             --insts_available;
 
@@ -685,6 +695,8 @@ Decode::decodeInsts(ThreadID tid)
         ++toRenameIndex;
         ++stats.decodedInsts;
         --insts_available;
+        // bc.update("decode.decodedInsts", stats.decodedInsts.total(),
+        // curTick());
 
 #if TRACING_ON
         if (debug::O3PipeView) {
@@ -698,6 +710,8 @@ Decode::decodeInsts(ThreadID tid)
             panic("Instruction predicted as a branch!");
 
             ++stats.controlMispred;
+            bc.update("decode.controlMispred", stats.controlMispred.total(),
+                      curTick());
 
             // Might want to set some sort of boolean and just do
             // a check at the end
@@ -713,10 +727,14 @@ Decode::decodeInsts(ThreadID tid)
            (inst->isUncondCtrl() || inst->readPredTaken()))
         {
             ++stats.branchResolved;
+            bc.update("decode.branchResolved", stats.branchResolved.total(),
+                      curTick());
 
             std::unique_ptr<PCStateBase> target = inst->branchTarget();
             if (*target != inst->readPredTarg()) {
                 ++stats.branchMispred;
+                bc.update("decode.branchMispred", stats.branchMispred.total(),
+                          curTick());
 
                 // Might want to set some sort of boolean and just do
                 // a check at the end

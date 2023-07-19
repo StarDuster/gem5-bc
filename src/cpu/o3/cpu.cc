@@ -60,10 +60,13 @@
 #include "sim/process.hh"
 #include "sim/stat_control.hh"
 #include "sim/system.hh"
+// #include "sim/burst_counter.hh"
+#include <unordered_map>
 
 namespace gem5
 {
-
+extern burstCounter bc;
+extern Tick BCClockPeriod;
 struct BaseCPUParams;
 
 namespace o3
@@ -452,7 +455,11 @@ CPU::tick()
     ++baseStats.numCycles;
     updateCycleCounters(BaseCPU::CPU_STATE_ON);
 
-//    activity = false;
+    // check whether cycle count dived by 10000
+    // if (static_cast<int>(baseStats.numCycles.value()) % 1000000 == 0) {
+        // std::cout << static_cast<int>(baseStats.numCycles.value()) << " " << curTick() 
+        //     << " " << clockPeriod() << std::endl;
+    // }
 
     //Tick each of the stages
     fetch.tick();
@@ -504,6 +511,8 @@ void
 CPU::init()
 {
     BaseCPU::init();
+    // record clockPeriod here
+    Tick BCClockPeriod = clockPeriod();
 
     for (ThreadID tid = 0; tid < numThreads; ++tid) {
         // Set noSquashFromTC so that the CPU doesn't squash when initially

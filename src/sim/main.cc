@@ -29,16 +29,29 @@
 #include <Python.h>
 
 #include <iostream>
-
+#include <map>
+#include <string>
+#include <unordered_map>
+#include "cur_tick.hh"
 #include "pybind11/embed.h"
 #include "pybind11/pybind11.h"
 
 #include "python/embedded.hh"
 #include "sim/init_signals.hh"
+#include "burst_counter.hh"
 
 using namespace gem5;
 
 namespace py = pybind11;
+
+namespace gem5 {
+    burstCounter bc;
+    Tick BCClockPeriod;
+}
+
+void initBurstCounter(){
+
+}
 
 // main() is now pretty stripped down and just sets up python and then
 // calls EmbeddedPython::initAll which loads the various embedded python
@@ -49,6 +62,9 @@ main(int argc, char **argv)
 {
     // Initialize gem5 special signal handling.
     initSignals();
+    
+    // Initialize burst counter
+    initBurstCounter();
 
     // Convert argv[0] to a wchar_t string, using python's locale and cleanup
     // functions.
