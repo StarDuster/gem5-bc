@@ -225,8 +225,8 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
         if (!inst->isReturn()) {
             if (inst->isDirectCtrl() || !iPred) {
                 ++stats.BTBLookups;
-                bc.update("branchPred.BTBLookups", stats.BTBLookups.total(),
-                          curTick());
+                // bc.update("branchPred.BTBLookups", stats.BTBLookups.total(),
+                //           curTick());
                 // Check BTB on direct branches
                 if (BTB.valid(pc.instAddr(), tid)) {
                     ++stats.BTBHits;

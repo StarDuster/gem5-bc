@@ -73,10 +73,11 @@ public:
       sortedEvents =
           std::map<string, counterData>(events.begin(), events.end());
     }
+    cout << "recorded events: ";
     for (auto &iter : sortedEvents) {
       cout << iter.first << " ";
     }
-    cout << endl << "all events: " << events.size() << endl;
+    cout << endl << "all events count: " << events.size() << endl;
   }
 
   double getValue(string name) { return events[name].value; }

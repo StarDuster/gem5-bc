@@ -4,6 +4,10 @@ parsetab.py
 cscope.files
 cscope.out
 *.pyc
+*.patch
+mm*.txt
+bc*.txt
+compile_commands.json
 *~
 .*.swp
 .*.swo
@@ -31,4 +35,5 @@ m5out
 configs/example/memcheck.cfg
 configs/dram/lowp_sweep.cfg
 .pyenv
-.vscode
+.vscode/
+.cache/
