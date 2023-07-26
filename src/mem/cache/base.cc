@@ -405,7 +405,6 @@ BaseCache::handleTimingReqMiss(PacketPtr pkt, MSHR *mshr, CacheBlk *blk,
 }
 
 void BaseCache::recordCacheMisses() {
-    // total Cycles: 6383155
     // get the last substr split by '.', cacheName could be like "l1dcache"
     std::string cacheName = name().substr(name().find_last_of('.') + 1);
     Tick tick = curTick();
@@ -425,10 +424,11 @@ void BaseCache::recordCacheMisses() {
 }
 
 void BaseCache::recordCacheHits() {
-    // total Cycles: 6383155
+    if (stats.overallHits.total() == 0) {
+        return;
+    }
     // get the last substr split by '.', cacheName could be like "l1dcache"
     std::string cacheName = name().substr(name().find_last_of('.') + 1);
-
     // std::cout << cacheName << std::endl;
     if (cacheName == "l2cache") {
         bc.update(cacheName + ".overallHits", stats.overallHits.total(),
