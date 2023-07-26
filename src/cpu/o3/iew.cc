@@ -840,13 +840,13 @@ IEW::dispatch(ThreadID tid)
 
     if (dispatchStatus[tid] == Blocked) {
         ++iewStats.blockCycles;
-        // bc.update("iewStats.blockCycles", iewStats.blockCycles.total(),
+        // bc.update("iew.blockCycles", iewStats.blockCycles.total(),
         // curTick());
 
     } else if (dispatchStatus[tid] == Squashing) {
         ++iewStats.squashCycles;
-        bc.update("iewStats.squashCycles", iewStats.squashCycles.total(),
-                  curTick());
+        // bc.update("iew.squashCycles", iewStats.squashCycles.total(),
+        //           curTick());
     }
 
     // Dispatch should try to dispatch as many instructions as its bandwidth
@@ -868,7 +868,7 @@ IEW::dispatch(ThreadID tid)
         dispatchInsts(tid);
 
         ++iewStats.unblockCycles;
-        // bc.update("iewStats.unblockCycles", iewStats.unblockCycles.total(),
+        // bc.update("iew.unblockCycles", iewStats.unblockCycles.total(),
         //           curTick());
 
         if (fromRename->size != 0) {
@@ -955,7 +955,7 @@ IEW::dispatchInsts(ThreadID tid)
             toRename->iewUnblock[tid] = false;
 
             ++iewStats.iqFullEvents;
-            bc.update("iewStats.iqFullEvents", iewStats.iqFullEvents.total(),
+            bc.update("iew.iqFullEvents", iewStats.iqFullEvents.total(),
                       curTick());
             break;
         }
@@ -976,7 +976,7 @@ IEW::dispatchInsts(ThreadID tid)
             toRename->iewUnblock[tid] = false;
 
             ++iewStats.lsqFullEvents;
-            bc.update("iewStats.lsqFullEvents", iewStats.lsqFullEvents.total(),
+            bc.update("iew.lsqFullEvents", iewStats.lsqFullEvents.total(),
                       curTick());
             break;
         }
@@ -1325,12 +1325,12 @@ IEW::executeInsts()
 
                 if (inst->readPredTaken()) {
                     iewStats.predictedTakenIncorrect++;
-                    bc.update("iewStats.predictedTakenIncorrect",
+                    bc.update("iew.predictedTakenIncorrect",
                               iewStats.predictedTakenIncorrect.total(),
                               curTick());
                 } else {
                     iewStats.predictedNotTakenIncorrect++;
-                    bc.update("iewStats.predictedNotTakenIncorrect",
+                    bc.update("iew.predictedNotTakenIncorrect",
                               iewStats.predictedNotTakenIncorrect.total(),
                               curTick());
                 }
@@ -1630,11 +1630,11 @@ IEW::checkMisprediction(const DynInstPtr& inst)
 
             if (inst->readPredTaken()) {
                 iewStats.predictedTakenIncorrect++;
-                bc.update("iewStats.predictedTakenIncorrect",
+                bc.update("iew.predictedTakenIncorrect",
                           iewStats.predictedTakenIncorrect.total(), curTick());
             } else {
                 iewStats.predictedNotTakenIncorrect++;
-                bc.update("iewStats.predictedNotTakenIncorrect",
+                bc.update("iew.predictedNotTakenIncorrect",
                           iewStats.predictedNotTakenIncorrect.total(),
                           curTick());
             }

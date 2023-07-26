@@ -179,7 +179,7 @@ public:
         }
       }
     }
-    std::ofstream myfile("bc" + to_string(cycle) + "V" + to_string(N) + ".txt");
+    std::ofstream myfile("bc" + to_string(cycle) + "v" + to_string(N) + ".txt");
     myfile << "[";
     for (auto iter = sorted_map.begin(); iter != sorted_map.end(); ++iter) {
       myfile << "[";

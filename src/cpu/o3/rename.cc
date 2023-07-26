@@ -466,11 +466,12 @@ Rename::rename(bool &status_change, ThreadID tid)
         // curTick());
     } else if (renameStatus[tid] == Squashing) {
         ++stats.squashCycles;
-        bc.update("rename.squashCycles", stats.squashCycles.total(), curTick());
+        // bc.update("rename.squashCycles", stats.squashCycles.total(),
+        // curTick());
     } else if (renameStatus[tid] == SerializeStall) {
         ++stats.serializeStallCycles;
-        bc.update("rename.serializeStallCycles",
-                  stats.serializeStallCycles.total(), curTick());
+        // bc.update("rename.serializeStallCycles",
+        //           stats.serializeStallCycles.total(), curTick());
         // If we are currently in SerializeStall and resumeSerialize
         // was set, then that means that we are resuming serializing
         // this cycle.  Tell the previous stages to block.
@@ -525,13 +526,13 @@ Rename::renameInsts(ThreadID tid)
                 tid);
         // Should I change status to idle?
         ++stats.idleCycles;
-        // bc.update("rename.idleCycles", stats.idleCycles.total(), curTick());
+        bc.update("rename.idleCycles", stats.idleCycles.total(), curTick());
 
         return;
     } else if (renameStatus[tid] == Unblocking) {
         ++stats.unblockCycles;
-        bc.update("rename.unblockCycles", stats.unblockCycles.total(),
-                  curTick());
+        // bc.update("rename.unblockCycles", stats.unblockCycles.total(),
+        //           curTick());
     } else if (renameStatus[tid] == Running) {
         ++stats.runCycles;
         // bc.update("rename.runCycles", stats.runCycles.total(), curTick());
@@ -1404,15 +1405,20 @@ Rename::incrFullStat(const FullSource &source)
     switch (source) {
       case ROB:
         ++stats.ROBFullEvents;
+        bc.update("rename.ROBFullEvents", stats.ROBFullEvents.total(),
+                  curTick());
         break;
       case IQ:
         ++stats.IQFullEvents;
+        bc.update("rename.IQFullEvents", stats.IQFullEvents.total(), curTick());
         break;
       case LQ:
         ++stats.LQFullEvents;
+        bc.update("rename.LQFullEvents", stats.LQFullEvents.total(), curTick());
         break;
       case SQ:
         ++stats.SQFullEvents;
+        bc.update("rename.SQFullEvents", stats.SQFullEvents.total(), curTick());
         break;
       default:
         panic("Rename full stall stat should be incremented for a reason!");

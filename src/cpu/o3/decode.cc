@@ -591,7 +591,8 @@ Decode::decode(bool &status_change, ThreadID tid)
         //           curTick());
     } else if (decodeStatus[tid] == Squashing) {
         ++stats.squashCycles;
-        bc.update("decode.squashCycles", stats.squashCycles.total(), curTick());
+        // bc.update("decode.squashCycles", stats.squashCycles.total(),
+        // curTick());
     }
 
     // Decode should try to decode as many instructions as its bandwidth
@@ -641,8 +642,8 @@ Decode::decodeInsts(ThreadID tid)
         DPRINTF(Decode, "[tid:%i] Unblocking, removing insts from skid "
                 "buffer.\n",tid);
         ++stats.unblockCycles;
-        bc.update("decode.unblockCycles", stats.unblockCycles.total(),
-                  curTick());
+        // bc.update("decode.unblockCycles", stats.unblockCycles.total(),
+        // curTick());
     } else if (decodeStatus[tid] == Running) {
         ++stats.runCycles;
         // bc.update("decode.runCycles", stats.runCycles.total(), curTick());

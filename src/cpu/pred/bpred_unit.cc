@@ -230,8 +230,8 @@ BPredUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
                 // Check BTB on direct branches
                 if (BTB.valid(pc.instAddr(), tid)) {
                     ++stats.BTBHits;
-                    bc.update("branchPred.BTBHits", stats.BTBHits.total(),
-                              curTick());
+                    // bc.update("branchPred.BTBHits", stats.BTBHits.total(),
+                    //           curTick());
                     // If it's not a return, use the BTB to get target addr.
                     set(target, BTB.lookup(pc.instAddr(), tid));
                     DPRINTF(Branch,
@@ -505,8 +505,8 @@ BPredUnit::squash(const InstSeqNum &squashed_sn,
                         hist_it->seqNum, hist_it->pc);
 
                 ++stats.BTBUpdates;
-                bc.update("branchPred.BTBUpdates", stats.BTBUpdates.total(),
-                          curTick());
+                // bc.update("branchPred.BTBUpdates", stats.BTBUpdates.total(),
+                //           curTick());
                 BTB.update(hist_it->pc, corr_target, tid);
             }
         } else {
