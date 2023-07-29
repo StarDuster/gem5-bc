@@ -80,6 +80,17 @@ public:
     cout << endl << "all events count: " << events.size() << endl;
   }
 
+  void printCounter(string name) { cout << events[name].value << endl; }
+
+  void printAllCounters() {
+    cout << "1145141919810" << endl;
+    std::map<string, counterData> output_map(events.begin(), events.end());
+    for (auto &iter : output_map) {
+      cout << std::fixed << std::setprecision(0);
+      cout << iter.first << ": " << iter.second.value << endl;
+    }
+  }
+
   double getValue(string name) { return events[name].value; }
 
   Cycles getLastUpdateCycle(string name) {
@@ -127,16 +138,6 @@ public:
           break; // exit the loop once a match is found
         }
       }
-    }
-  }
-
-  void printCounter(string name) { cout << events[name].value << endl; }
-
-  void printAllCounters() {
-    std::map<string, counterData> output_map(events.begin(), events.end());
-    for (auto &iter : output_map) {
-      cout << std::fixed << std::setprecision(0);
-      cout << iter.first << ": " << iter.second.value << endl;
     }
   }
 

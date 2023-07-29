@@ -107,7 +107,7 @@ exitSimLoop(const std::string &message, int exit_code, Tick when, Tick repeat,
     bc.dumpBCtoFile<1>(256, bc.eventIn256Cycles);
     bc.dumpBCtoFile<2>(256, bc.eventIn256CyclesV2);
     bc.printEventNames();
-    // cout << bc.getValue("l3cache.overallHits");
+    bc.printAllCounters();
 
     new GlobalSimLoopExitEvent(when + simQuantum, message, exit_code, repeat);
 }

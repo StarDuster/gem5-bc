@@ -1306,7 +1306,17 @@ class BaseCache : public ClockedObject
         assert(pkt->req->requestorId() < system->maxRequestors());
         stats.cmdStats(pkt).misses[pkt->req->requestorId()]++;
         pkt->req->incAccessDepth();
-        recordCacheMisses();
+
+        // if cmdString is one of WriteReq ReadExReq ReadReq ReadSharedReq
+        // SoftPFExReq HardPFReq SoftPFReq WriteLineReq ReadCleanReq
+        std::string cmdStr = pkt->cmdString();
+        if (cmdStr == "WriteReq" || cmdStr == "ReadExReq" ||
+            cmdStr == "ReadReq" || cmdStr == "ReadSharedReq" ||
+            cmdStr == "SoftPFExReq" || cmdStr == "HardPFReq" ||
+            cmdStr == "SoftPFReq" || cmdStr == "WriteLineReq" ||
+            cmdStr == "ReadCleanReq") {
+            recordCacheMisses();
+        }
         if (missCount) {
             --missCount;
             if (missCount == 0)
@@ -1318,7 +1328,16 @@ class BaseCache : public ClockedObject
     {
         assert(pkt->req->requestorId() < system->maxRequestors());
         stats.cmdStats(pkt).hits[pkt->req->requestorId()]++;
-        recordCacheHits();
+        // if cmdString is one of WriteReq ReadExReq ReadReq ReadSharedReq
+        // SoftPFExReq HardPFReq SoftPFReq WriteLineReq ReadCleanReq
+        std::string cmdStr = pkt->cmdString();
+        if (cmdStr == "WriteReq" || cmdStr == "ReadExReq" ||
+            cmdStr == "ReadReq" || cmdStr == "ReadSharedReq" ||
+            cmdStr == "SoftPFExReq" || cmdStr == "HardPFReq" ||
+            cmdStr == "SoftPFReq" || cmdStr == "WriteLineReq" ||
+            cmdStr == "ReadCleanReq") {
+            recordCacheHits();
+        }
     }
 
     /**
