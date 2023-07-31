@@ -83,7 +83,6 @@ public:
   void printCounter(string name) { cout << events[name].value << endl; }
 
   void printAllCounters() {
-    cout << "1145141919810" << endl;
     std::map<string, counterData> output_map(events.begin(), events.end());
     for (auto &iter : output_map) {
       cout << std::fixed << std::setprecision(0);
@@ -102,7 +101,9 @@ public:
       if (iter.first == name)
         continue;
       Cycles diff = curCycle - iter.second.lastUpdateCycle;
-      if (diff < 16) {
+      if (diff == 0)
+        return;
+      else if (diff < 16) {
         eventIn16Cycles[iter.first][name].value++;
       } else if (diff < 32) {
         eventIn32Cycles[iter.first][name].value++;
@@ -123,6 +124,8 @@ public:
       // iter.first = events EARLY then current update
       // map[iter.first][name] = early -> now
       Cycles diff = curCycle - iter.second.lastUpdateCycle;
+      if (diff == 0)
+        return;
       std::vector<std::pair<int, BCMap *>> thresholdsAndEvents = {
           {16, &eventIn16CyclesV2},
           {32, &eventIn32CyclesV2},
