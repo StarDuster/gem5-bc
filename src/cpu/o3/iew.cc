@@ -847,6 +847,11 @@ IEW::dispatch(ThreadID tid)
         ++iewStats.squashCycles;
         // bc.update("iew.squashCycles", iewStats.squashCycles.total(),
         //           curTick());
+
+    } else if (dispatchStatus[tid] == Idle) {
+        ++iewStats.idleCycles;
+        // std::cout << "wtf" << std::endl;
+        bc.update("iew.idleCycles", iewStats.idleCycles.total(), curTick());
     }
 
     // Dispatch should try to dispatch as many instructions as its bandwidth

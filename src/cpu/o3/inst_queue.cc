@@ -59,7 +59,8 @@ using std::list;
 
 namespace gem5
 {
-
+extern burstCounter bc;
+extern Tick BCClockPeriod;
 namespace o3
 {
 
@@ -914,6 +915,7 @@ InstructionQueue::scheduleReadyInsts()
         cpu->activityThisCycle();
     } else {
         DPRINTF(IQ, "Not able to schedule any instructions.\n");
+        bc.increase("iew.idleCycles", curTick());
     }
 }
 

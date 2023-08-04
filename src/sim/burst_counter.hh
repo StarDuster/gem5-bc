@@ -68,6 +68,18 @@ public:
     checkOrderV2(name, curCycle);
   }
 
+  void increase(string name, Tick curTick) {
+    Cycles curCycle = Cycles((curTick + BCClockPeriod - 1) / BCClockPeriod);
+    // if events[name] not exist, set it to 0
+    if (events.find(name) == events.end()) {
+      events[name] = {};
+    }
+    events[name].value += 1;
+    events[name].lastUpdateCycle = curCycle;
+    checkOrder(name, curCycle);
+    checkOrderV2(name, curCycle);
+  }
+
   void printEventNames() {
     if (sortedEvents.empty()) {
       sortedEvents =
